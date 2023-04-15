@@ -67,7 +67,6 @@ UINT8 game_readLevels(char *filename);
 void game_sendSpriteData(void);
 
 void game_initLevel(UINT8 levelid);
-void game_initSprites(void);
 void game_resetSprites(void);
 void game_displayLevel(void);
 void game_displayMinimap(void);

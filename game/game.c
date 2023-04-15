@@ -791,10 +791,17 @@ INT16 game_selectLevel(UINT8 levels, UINT16 previouslevel)
 
 void game_displayLevel(void)
 {
-	UINT16 width, height;
-	UINT16 ystart,xstart,x,y;
+	UINT16 width, height;		// position in level GRID
+	UINT16 ystart,xstart,x,y;	// on-screen positions
 	char c;
 	
+	spritenumber = 1;
+	// Player sprite
+	vdp_spriteSelect(0);
+	vdp_spriteClearFramesSelected();
+	vdp_spriteAddFrameSelected(TILE_PLAYER);
+	vdp_spriteHideSelected();
+
 	// calculate on-screen base coordinates
 	xstart = ((MAXWIDTH - currentlevel.width) / 2) * BITMAP_WIDTH;
 	ystart = ((MAXHEIGHT - currentlevel.height) / 2) *BITMAP_HEIGHT;
@@ -806,6 +813,7 @@ void game_displayLevel(void)
 		for(width = 0; width < currentlevel.width; width++)
 		{
 			c = currentlevel.data[height][width];
+			sprites[height][width] = NOSPRITE; // for most cases, faster
 			switch(c)
 			{
 				case CHAR_WALL:
@@ -819,9 +827,16 @@ void game_displayLevel(void)
 					break;
 				case CHAR_BOX:
 				case CHAR_BOXONGOAL:
-					vdp_spriteSelect(sprites[height][width]);
+					vdp_spriteSelect(spritenumber);
+					vdp_spriteClearFramesSelected();
+					vdp_spriteAddFrameSelected(TILE_BOX);
+					vdp_spriteAddFrameSelected(TILE_BOXONGOAL);
+					if(c == CHAR_BOXONGOAL) vdp_spriteSetFrameSelected(1);
+					else vdp_spriteSetFrameSelected(0);
 					vdp_spriteMoveToSelected(x,y);
 					vdp_spriteShowSelected();
+					sprites[height][width] = spritenumber;
+					spritenumber++;
 					if(c == CHAR_BOXONGOAL)
 					{
 						vdp_bitmapDraw(TILE_GOAL, x, y); // don't forget to draw the goal beneath
@@ -840,7 +855,7 @@ void game_displayLevel(void)
 		}
 		y += BITMAP_HEIGHT;
 	}
-
+	vdp_spriteActivateTotal(spritenumber);
 	vdp_spriteRefresh();
 }
 
@@ -938,47 +953,3 @@ void game_initLevel(UINT8 levelid)
 	undo_head = 0;
 	num_undomoves = 0;
 }
-
-void game_initSprites(void)
-{
-	UINT8 x,y;
-	UINT8 boxsprite = 1;
-	
-	// Now build up the current level
-	// Player sprite
-	vdp_spriteSelect(0);
-	vdp_spriteClearFramesSelected();
-	vdp_spriteAddFrameSelected(TILE_PLAYER);
-	vdp_spriteHideSelected();
-
-	// set sprite positions
-	for(y = 0; y < currentlevel.height; y++)
-	{
-		for(x = 0; x < currentlevel.width; x++)
-		{
-			switch(currentlevel.data[y][x])
-			{
-				case CHAR_BOX:
-				case CHAR_BOXONGOAL:
-					vdp_spriteSelect(boxsprite);
-					vdp_spriteClearFramesSelected();
-					vdp_spriteAddFrameSelected(TILE_BOX);
-					vdp_spriteAddFrameSelected(TILE_BOXONGOAL);
-					if(currentlevel.data[y][x] == CHAR_BOXONGOAL) vdp_spriteSetFrameSelected(1);
-					else vdp_spriteSetFrameSelected(0);
-					vdp_spriteHideSelected();
-					sprites[y][x] = boxsprite;
-					boxsprite++;
-					break;
-				default:
-					sprites[y][x] = NOSPRITE;
-					break;
-			}	
-		}
-	}
-
-	// activate all sprites. boxsprite is allready set to one extra, we use that extra to account for the player sprite
-	spritenumber = boxsprite;
-	vdp_spriteActivateTotal(spritenumber);
-}
-	
