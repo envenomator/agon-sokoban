@@ -1,4 +1,5 @@
 #include <defines.h>
+#include "vdp.h"
 #include "mos-interface.h"
 
 // Generic functions
@@ -27,6 +28,21 @@ void vdp_mode(unsigned char mode)
 {
     putch(22);
     putch(mode);
+}
+
+void vdp_getMode(void) {
+	putch(23);
+	putch(0);
+	putch(0x86);
+}
+
+void vdp_setPaletteColor(UINT8 index, UINT8 color, UINT8 r, UINT8 g, UINT8 b) {
+	putch(0x13); // VDU palette
+	putch(index);
+	putch(color); // 255 - set R/G/B colors, or <80 color lookup table
+	putch(r);
+	putch(g);
+	putch(b);
 }
 
 // Text functions
@@ -296,7 +312,7 @@ void vdp_spriteSetFrameSelected(UINT8 framenumber)
 void vdp_spriteSetFrame(UINT8 id, UINT8 framenumber)
 {
 	vdp_spriteSelect(id);
-	vdp_spriteNextFrameSelected();
+	vdp_spriteSetFrameSelected(framenumber);
 	return;
 }
 
@@ -387,11 +403,12 @@ UINT8 vdp_cursorGetXpos(void)
 	
 	putch(23);	// VDP command
 	putch(0);	// VDP command
-	putch(2);	// Request cursor position
+	putch(0x82);	// Request cursor position
 	
 	delay = 255;
 	while(delay--);
-	return(getsysvar8bit(sysvar_cursorX));
+	return(getsysvar_cursorX());
+
 }
 
 UINT8 vdp_cursorGetYpos(void)
@@ -400,11 +417,11 @@ UINT8 vdp_cursorGetYpos(void)
 	
 	putch(23);	// VDP command
 	putch(0);	// VDP command
-	putch(2);	// Request cursor position
+	putch(0x82);	// Request cursor position
 	
 	delay = 255;
 	while(delay--);
-	return(getsysvar8bit(sysvar_cursorY));
+	return(getsysvar_cursorY());
 }
 
 char vdp_asciiCodeAt(unsigned char x, unsigned char y)
@@ -413,7 +430,7 @@ char vdp_asciiCodeAt(unsigned char x, unsigned char y)
 	
 	putch(23);	// VDP command
 	putch(0);	// VDP command
-	putch(3);	// Request ascii code at position (x,y)
+	putch(0x83);	// Request ascii code at position (x,y)
 	putch(x);
 	putch(0);
 	putch(y);
@@ -421,7 +438,12 @@ char vdp_asciiCodeAt(unsigned char x, unsigned char y)
 	
 	delay = 64000;
 	while(delay--);
-	return(getsysvar8bit(sysvar_scrchar));
+	return(getsysvar_scrchar());
+}
+
+void  vdp_setpagedMode(bool mode) {
+	if(mode) putch(0x0E);
+	else putch(0x0F);
 }
 
 void vdp_cursorDisable(void)
