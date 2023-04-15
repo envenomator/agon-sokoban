@@ -68,6 +68,7 @@ void vdp_cursorGoto(unsigned char x, unsigned char y)
     putch(y);
 }
 
+/*
 void vdp_colour(unsigned char foreground, unsigned char r, unsigned char g, unsigned char b)
 {
     putch(17); // COLOUR
@@ -86,6 +87,17 @@ void vdp_bgcolour(unsigned char r, unsigned char g, unsigned char b)
 {
     vdp_colour(0,r,g,b);
 }
+*/
+
+void vdp_fgcolour(unsigned char colorindex) {
+	putch(17); // COLOUR
+	putch(colorindex);	
+}
+
+void vdp_bgcolour(unsigned char colorindex) {
+	putch(17); // COLOUR
+	putch(colorindex | 0x80);	
+}
 
 //
 // Graphics functions
@@ -96,6 +108,7 @@ void vdp_clearGraphics()
     putch(16);    
 }
 
+/*
 void vdp_plotColour(unsigned char r, unsigned char g, unsigned char b)
 {
     putch(18); // GCOL
@@ -103,6 +116,13 @@ void vdp_plotColour(unsigned char r, unsigned char g, unsigned char b)
     putch(r);
     putch(g);
     putch(b);
+}
+*/
+void vdp_plotColour(unsigned char colorindex)
+{
+    putch(18); // GCOL
+    putch(1);
+	putch(colorindex);
 }
 
 // internal function

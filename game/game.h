@@ -13,12 +13,15 @@
 #define BITMAP_HEIGHT	16	
 #define MINIMAP_WIDTH	8
 #define MINIMAP_HEIGHT	8
+#define MINIMAP_XSTART	32
+#define MINIMAP_YSTART	92
+
 #define BITMAPSIZE		(BITMAP_WIDTH*BITMAP_HEIGHT)
 
-#define HELP_XPOS_MODE1		44
-#define HELP_YPOS_MODE1		10
-#define HELP_XPOS_MODE0		30
-#define HELP_YPOS_MODE0		13
+#define HELP_XPOS_MAP		50
+#define HELP_YPOS_MAP		13
+#define HELP_XPOS_GAME		30
+#define HELP_YPOS_GAME		13
 
 
 #define TILE_WALL				0
@@ -60,7 +63,6 @@ struct undoitem
 };
 
 void print_playfieldText(VOID);
-//UINT16 read_numberoflevels(VOID);
 UINT8 game_readLevels(char *filename);
 void game_sendSpriteData(void);
 
@@ -71,7 +73,6 @@ void game_displayLevel(void);
 void game_displayMinimap(void);
 BOOL game_handleKey(char key);
 INT16 game_selectLevel(UINT8 levels, UINT16 levelnumber);
-//BOOL game_checkQuit(char key);
 char game_getResponse(char *message, char option1, char option2);
 void game_displayHelp(UINT8 x, UINT8 y);
 void game_handleUndoMove(void);

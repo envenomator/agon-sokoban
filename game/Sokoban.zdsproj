@@ -9,6 +9,8 @@
 <file filter-key="">.\Sokoban.linkcmd</file>
 <file filter-key="">.\vdp.c</file>
 <file filter-key="">.\game.c</file>
+<file filter-key="">.\agontimer.c</file>
+<file filter-key="">.\agontimer-timer0.asm</file>
 </files>
 
 <!-- configuration information -->
