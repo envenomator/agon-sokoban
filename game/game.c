@@ -659,7 +659,6 @@ void game_splash_screen()
 
 	vdp_cursorGoto(0,10);
 	vdp_cursorDisable();
-	//vdp_fgcolour(255,0,0);
 	vdp_fgcolour(BRIGHT_RED);
 	puts("             _____       _         _                 \r\n");
 	vdp_fgcolour(BRIGHT_MAGENTA);
@@ -674,11 +673,11 @@ void game_splash_screen()
 	puts("           |_____/ \\___/|_|\\_\\___/|_.__/ \\__,_|_| |_|\r\n");
 	puts("\r\n");
 	puts("\r\n");
-	vdp_fgcolour(BRIGHT_GREEN);
-	puts("                           For Agon (TM)\r\n");
+	vdp_fgcolour(DARK_GREEN);
+	puts("                         v1.1 For Agon (TM)\r\n");
 	puts("\r\n");
 	vdp_fgcolour(DARK_WHITE);
-	puts("                     (c) 2023 Jeroen Venema\r\n");
+	puts("                      (c) 2023 Jeroen Venema\r\n");
 }
 
 void game_displayHelp(UINT8 xpos, UINT8 ypos)
@@ -813,9 +812,8 @@ void game_displayLevel(void)
 		for(width = 0; width < currentlevel.width; width++)
 		{
 			c = currentlevel.data[height][width];
-			sprites[height][width] = NOSPRITE; // for most cases, faster
-			switch(c)
-			{
+			sprites[height][width] = NOSPRITE; // Faster in most cases
+			switch(c) {
 				case CHAR_WALL:
 					vdp_bitmapDraw(TILE_WALL, x, y);
 					break;
@@ -837,8 +835,7 @@ void game_displayLevel(void)
 					vdp_spriteShowSelected();
 					sprites[height][width] = spritenumber;
 					spritenumber++;
-					if(c == CHAR_BOXONGOAL)
-					{
+					if(c == CHAR_BOXONGOAL) {
 						vdp_bitmapDraw(TILE_GOAL, x, y); // don't forget to draw the goal beneath
 					}
 					break;
@@ -870,14 +867,11 @@ void game_displayMinimap(void)
 	ystart = (((MAXHEIGHT - currentlevel.height) / 2) * MINIMAP_HEIGHT) + MINIMAP_YSTART;
 	
 	y = ystart;
-	for(height = 0; height < currentlevel.height; height++)
-	{
+	for(height = 0; height < currentlevel.height; height++)	{
 		x = xstart;
-		for(width = 0; width < currentlevel.width; width++)
-		{
+		for(width = 0; width < currentlevel.width; width++) {
 			c = currentlevel.data[height][width];
-			switch(c)
-			{
+			switch(c) {
 				case CHAR_WALL:
 					vdp_bitmapDraw(TILE_WALL_MINI, x, y);
 					break;
@@ -908,7 +902,6 @@ void game_displayMinimap(void)
 		y += MINIMAP_HEIGHT;
 	}
 }
-
 
 UINT8 game_readLevels(char *filename)
 {
@@ -943,7 +936,6 @@ UINT8 game_readLevels(char *filename)
 	}
 	return numlevels;
 }	
-
 
 void game_initLevel(UINT8 levelid)
 {

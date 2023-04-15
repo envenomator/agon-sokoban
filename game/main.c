@@ -32,7 +32,6 @@ int main(int argc, char * argv[]) {
 				ingame = TRUE;
 				vdp_cls();
 				game_initLevel(levelnumber);	// initialize playing field data from memory or disk
-				//game_initSprites();				// position sprites in grid, according to level data						
 				game_displayLevel();
 				while(ingame) {
 					key = getch();
@@ -43,7 +42,6 @@ int main(int argc, char * argv[]) {
 							game_resetSprites();
 							ingame = (game_getResponse("Really QUIT level (y/n)?",'y','n') != 'y');
 							if(ingame) {
-								//game_initSprites();
 								game_displayLevel();
 							}
 							break;
@@ -53,7 +51,6 @@ int main(int argc, char * argv[]) {
 							game_displayHelp(HELP_XPOS_GAME, HELP_YPOS_GAME);
 							getch();
 							vdp_cls();
-							//game_initSprites();
 							game_displayLevel();
 							break;
 						case 'u':

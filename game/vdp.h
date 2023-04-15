@@ -66,8 +66,6 @@ void  vdp_cursorDisable(void);
 void  vdp_cursorEnable(void);
 char  vdp_asciiCodeAt(unsigned char x, unsigned char y);
 void  vdp_setpagedMode(bool mode);
-//void  vdp_fgcolour(unsigned char r, unsigned char g, unsigned char b);
-//void  vdp_bgcolour(unsigned char r, unsigned char g, unsigned char b);
 void  vdp_fgcolour(unsigned char colorindex);
 void  vdp_bgcolour(unsigned char colorindex);
 
