@@ -134,6 +134,12 @@ clean:
             $(RM) "$(WORKDIR)\agontimer-timer0.lis"
 	@if exist "$(WORKDIR)\agontimer-timer0.lst"  \
             $(RM) "$(WORKDIR)\agontimer-timer0.lst"
+	@if exist "$(WORKDIR)\sprite.obj"  \
+            $(RM) "$(WORKDIR)\sprite.obj"
+	@if exist "$(WORKDIR)\sprite.lis"  \
+            $(RM) "$(WORKDIR)\sprite.lis"
+	@if exist "$(WORKDIR)\sprite.lst"  \
+            $(RM) "$(WORKDIR)\sprite.lst"
 
 relist: 
 	$(AS) $(ASFLAGS) -relist:"C:\source\agon-sokoban\game\Debug\Sokoban.map" \
@@ -150,6 +156,8 @@ relist:
             C:\source\agon-sokoban\game\Debug\agontimer.src
 	$(AS) $(ASFLAGS) -relist:"C:\source\agon-sokoban\game\Debug\Sokoban.map" \
             C:\source\agon-sokoban\game\agontimer-timer0.asm
+	$(AS) $(ASFLAGS) -relist:"C:\source\agon-sokoban\game\Debug\Sokoban.map" \
+            C:\source\agon-sokoban\game\sprite.asm
 
 # pre-4.11.0 compatibility
 rebuildall: buildall 
@@ -163,7 +171,8 @@ OBJS =  \
             $(WORKDIR_ESCSPACE)\vdp.obj  \
             $(WORKDIR_ESCSPACE)\game.obj  \
             $(WORKDIR_ESCSPACE)\agontimer.obj  \
-            $(WORKDIR_ESCSPACE)\agontimer-timer0.obj
+            $(WORKDIR_ESCSPACE)\agontimer-timer0.obj  \
+            $(WORKDIR_ESCSPACE)\sprite.obj
 
 Sokoban: $(OBJS)
 	 $(LD) $(LDFLAGS)
@@ -208,9 +217,11 @@ $(WORKDIR_ESCSPACE)\game.obj :  \
             $(INCLUDE_ESCSPACE)\std\Stdio.h  \
             $(INCLUDE_ESCSPACE)\std\String.h  \
             $(INCLUDE_ESCSPACE)\zilog\defines.h  \
+            $(PRJDIR_ESCSPACE)\agontimer.h  \
             $(PRJDIR_ESCSPACE)\game.h  \
             $(PRJDIR_ESCSPACE)\mos-interface.h  \
             $(PRJDIR_ESCSPACE)\sokobanprep.h  \
+            $(PRJDIR_ESCSPACE)\sprite.h  \
             $(PRJDIR_ESCSPACE)\stdint.h  \
             $(PRJDIR_ESCSPACE)\vdp.h
 	 $(CC) $(CFLAGS) "$(PRJDIR)\game.c"
@@ -233,6 +244,11 @@ $(WORKDIR_ESCSPACE)\agontimer.obj :  \
 	 $(CC) $(CFLAGS) "$(PRJDIR)\agontimer.c"
 
 $(WORKDIR_ESCSPACE)\agontimer-timer0.obj :  \
-            $(PRJDIR_ESCSPACE)\agontimer-timer0.asm
+            $(PRJDIR_ESCSPACE)\agontimer-timer0.asm  \
+            $(INCLUDE_ESCSPACE)\zilog\ez80F92.inc
 	 $(AS) $(ASFLAGS) "$(PRJDIR)\agontimer-timer0.asm"
+
+$(WORKDIR_ESCSPACE)\sprite.obj :  \
+            $(PRJDIR_ESCSPACE)\sprite.asm
+	 $(AS) $(ASFLAGS) "$(PRJDIR)\sprite.asm"
 

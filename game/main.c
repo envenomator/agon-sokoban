@@ -26,8 +26,7 @@ int main(int argc, char * argv[]) {
 		game_sendSpriteData();		
 		while(levelnumber >= 0) {
 			levelnumber = game_selectLevel(levels, levelnumber); // returns -1 if abort, or valid number between 0-(levels-1)
-			if(levelnumber >= 0)
-			{
+			if(levelnumber >= 0) {
 				// Start game
 				ingame = TRUE;
 				vdp_cls();
@@ -58,8 +57,7 @@ int main(int argc, char * argv[]) {
 							break;
 						default:
 							ingame = !game_handleKey(key);	// handleKey returns TRUE when game is finished
-							if(!ingame)
-							{
+							if(!ingame) {
 								levelnumber++;
 								if(levelnumber == levels) levelnumber = 0;
 								delayms(200);

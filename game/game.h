@@ -8,6 +8,7 @@
 #define UNDOBUFFERSIZE	128
 
 #define NOSPRITE		255
+#define SPRITE_PLAYER	0
 #define BITMAPNUMBER	7
 #define BITMAP_WIDTH	16
 #define BITMAP_HEIGHT	16	

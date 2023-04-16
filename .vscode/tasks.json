@@ -14,7 +14,12 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "close": false
+              }  
         },
         {
             "label": "ZDS build changed files",
@@ -27,6 +32,22 @@
             "group": {
                 "kind": "build",
                 "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "close": false
+              }  
+        },
+        {
+            "label": "Upload Intel HEX file",
+            "type": "shell",
+            "command": "py.exe ./send.py ./game/Debug/Sokoban.hex",
+            "group": "test",
+            "presentation": {
+              "reveal": "always",
+              "panel": "new",
+              "close": true
             }
         }
     ]

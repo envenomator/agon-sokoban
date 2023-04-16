@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "agontimer.h"
+#include "sprite.h"
 
 struct undoitem undomove[UNDOBUFFERSIZE];
 UINT8 undo_head;
@@ -185,21 +186,17 @@ UINT32 playermini_data[1][64] = {
 }
 };
 
-void debug_print_playfieldText(void)
-{
+void debug_print_playfieldText(void) {
 	UINT16 width, height;
 	char c;
 	
-	for(height = 0; height < currentlevel.height; height++)
-	{
-		for(width = 0; width < currentlevel.width; width++)
-		{
+	for(height = 0; height < currentlevel.height; height++) {
+		for(width = 0; width < currentlevel.width; width++) {
 			c = currentlevel.data[height][width];
 			printf("%c",c?c:' ');
 		}
 		printf(" ");
-		for(width = 0; width < currentlevel.width; width++)
-		{
+		for(width = 0; width < currentlevel.width; width++) {
 			c = sprites[height][width] + '0';
 			if(c > '9') c = 'X';
 			printf("%c",c);
@@ -208,8 +205,7 @@ void debug_print_playfieldText(void)
 	}
 }
 
-void game_sendSpriteData(void)
-{
+void game_sendSpriteData(void) {
 	// needs to be called once, to load all bitmaps and sprites to the VDU
 	
 	vdp_bitmapSendData(TILE_WALL, BITMAP_WIDTH, BITMAP_HEIGHT, wall_data[0]);
@@ -237,34 +233,31 @@ void game_resetSprites(void)
 	UINT8 n;
 	
 	// disable all sprites
-	for(n = 0; n < spritenumber; n++)
-	{
+	for(n = 0; n < spritenumber; n++) {
 		vdp_spriteSelect(n);
 		vdp_spriteHide(n);
 		vdp_spriteSetFrame(n,0);
 		vdp_spriteClearFramesSelected();
 	}
-	vdp_spriteRefresh();
+	vdp_spriteWaitRefresh();
 	vdp_spriteActivateTotal(0);
 	spritenumber = 0;
 
 	// reset all sprite positions and clear out any sprites
 	memset(sprites, 255, MAXHEIGHT*MAXWIDTH);
 
-	vdp_spriteRefresh();
+	vdp_spriteWaitRefresh();
 	return;
 }
 
-BOOL canmove(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
-{
+BOOL canmove(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2) {
 	BOOL can = FALSE;
 	UINT8 n1, n2;
 	
 	n1 = currentlevel.data[yn1][xn1];
 	n2 = currentlevel.data[yn2][xn2];
 	
-	switch(n1)
-	{
+	switch(n1) {
 		case CHAR_WALL:
 			return FALSE;
 			break;
@@ -274,8 +267,7 @@ BOOL canmove(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
 			break;
 	}
 	// either BOX or BOXONGOAL next to player
-	switch(n2)
-	{
+	switch(n2) {
 		case CHAR_WALL:
 			return FALSE;
 			break;
@@ -288,110 +280,92 @@ BOOL canmove(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
 	return TRUE;
 }
 
-void move_sprites(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
-{
+void move_sprites(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2) {
 	// move can happen, no need to check again
 	UINT8 spriteid = sprites[yn1][xn1];
 	UINT8 n;
 	INT16 dx, dy;
 	UINT8 n2;
 		
-	dx = xn2 - xn1;
-	dy = yn2 - yn1;
+	dx = (xn2 - xn1)*BITMAP_WIDTH;
+	dy = (yn2 - yn1)*BITMAP_HEIGHT;
 	
-	for(n = 0; n < BITMAP_WIDTH; n++)
-	{
-		if(spriteid != NOSPRITE)
-		{
-			vdp_spriteSelect(spriteid);
-			vdp_spriteMoveBySelected(dx, dy);
-		}
-		vdp_spriteSelect(0); // player
-		vdp_spriteMoveBySelected(dx, dy);
+	if(spriteid != NOSPRITE) {
+		vdp_spriteMoveBy(spriteid, dx, dy);
 	}
+	vdp_spriteMoveBy(SPRITE_PLAYER, dx, dy);
+	vdp_spriteWaitRefresh();
 
 	// set destination sprite frame
-	if(spriteid != NOSPRITE)
-	{
-		vdp_spriteSelect(spriteid);
+	if(spriteid != NOSPRITE) {
 		// Check if the sprite moved to a goal or floor
 		n2 = currentlevel.data[yn2][xn2];
-		switch(n2)
-		{
+		switch(n2) {
 			case CHAR_FLOOR:
-				vdp_spriteSetFrameSelected(0);
+				vdp_spriteSetFrame(spriteid, 0);
+				vdp_spriteWaitRefresh();
 				break;
 			case CHAR_GOAL:
-				vdp_spriteSetFrameSelected(1);
+				vdp_spriteSetFrame(spriteid, 1);
+				vdp_spriteWaitRefresh();
+				break;
+			default:
 				break;
 		}
 	}
 	// update sprite number matrix
-	if(spriteid != NOSPRITE)
-	{
+	if(spriteid != NOSPRITE) {
 		// player shoves a box here
 		sprites[yn2][xn2] = sprites[yn1][xn1];
 	}
 	sprites[yn1][xn1] = NOSPRITE; // player's sprite isn't handled by using a box spriteid
 	sprites[currentlevel.ypos][currentlevel.xpos] = NOSPRITE;
-	
-	vdp_spriteRefresh();
 }
 
-void undomove_sprites(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
-{
+void undomove_sprites(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2) {
 	// move can happen, no need to check again
 	UINT8 spriteid = sprites[yn1][xn1];
 	UINT8 n;
 	INT16 dx, dy;
 	UINT8 n2;
 		
-	dx = xn2 - xn1;
-	dy = yn2 - yn1;
+	dx = (xn2 - xn1)*BITMAP_WIDTH;
+	dy = (yn2 - yn1)*BITMAP_HEIGHT;
 	
-	for(n = 0; n < BITMAP_WIDTH; n++)
-	{
-		if((undomove[undo_head].pushed) && (spriteid != NOSPRITE))
-		{
-			vdp_spriteSelect(spriteid);
-			vdp_spriteMoveBySelected(dx, dy);
-		}
-		vdp_spriteSelect(0); // player
-		vdp_spriteMoveBySelected(dx, dy);
+	if((undomove[undo_head].pushed) && (spriteid != NOSPRITE)) {
+		vdp_spriteMoveBy(spriteid, dx, dy);
 	}
+	vdp_spriteMoveBy(SPRITE_PLAYER, dx, dy);
+	vdp_spriteWaitRefresh();
 
 	// set destination sprite frame
-	if((undomove[undo_head].pushed) && (spriteid != NOSPRITE))
-	{
-		vdp_spriteSelect(spriteid);
+	if((undomove[undo_head].pushed) && (spriteid != NOSPRITE)) {
 		// Check if the sprite moved to a goal or floor
 		n2 = currentlevel.data[yn2][xn2];
-		switch(n2)
-		{
+		switch(n2) {
 			case CHAR_PLAYER:
-				vdp_spriteSetFrameSelected(0);
+				vdp_spriteSetFrame(spriteid, 0);
+				vdp_spriteWaitRefresh();
 				break;
 			case CHAR_PLAYERONGOAL:
-				vdp_spriteSetFrameSelected(1);
+				vdp_spriteSetFrame(spriteid, 1);
+				vdp_spriteWaitRefresh();
+				break;
+			default:
 				break;
 		}
 	}
 	// update sprite number matrix
-	if(undomove[undo_head].pushed)
-	{
-		if(spriteid != NOSPRITE)
-		{
+	if(undomove[undo_head].pushed) {
+		if(spriteid != NOSPRITE) {
 			// player shoved a box here
 			sprites[yn2][xn2] = sprites[yn1][xn1];
 		}
 		sprites[yn1][xn1] = NOSPRITE; // player's sprite isn't handled by using a box spriteid			
 	}
-	
-	vdp_spriteRefresh();
 }
 
-void move_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
-{
+void move_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2) {
 	// move can happen, no need to check again
 	UINT8 n1, n2;
 	BOOL onlyplayermoves;
@@ -400,9 +374,7 @@ void move_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
 	n1 = currentlevel.data[yn1][xn1];
 	n2 = currentlevel.data[yn2][xn2];
 
-	
-	switch(n1)
-	{
+	switch(n1) {
 		case CHAR_FLOOR:
 			onlyplayermoves = TRUE;
 			currentlevel.data[yn1][xn1] = CHAR_PLAYER;
@@ -415,10 +387,8 @@ void move_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
 			onlyplayermoves = FALSE;
 			break;
 	}
-	if(!onlyplayermoves)
-	{
-		switch(n2)
-		{
+	if(!onlyplayermoves) {
+		switch(n2) {
 			case CHAR_FLOOR:
 				currentlevel.data[yn2][xn2] = CHAR_BOX;
 				break;
@@ -429,8 +399,7 @@ void move_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
 			default:
 				break; // ignore the rest
 		}
-		switch(n1)
-		{
+		switch(n1) {
 			case CHAR_BOX:
 				currentlevel.data[yn1][xn1] = CHAR_PLAYER;				
 				break;
@@ -454,8 +423,7 @@ void move_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2)
 	currentlevel.ypos = yn1;
 }
 
-void undomove_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2, UINT16 xn3, UINT16 yn3)
-{
+void undomove_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2, UINT16 xn3, UINT16 yn3) {
 	UINT8 n1, n2, n3;
 	
 	// move n1 => n2 => n3
@@ -463,8 +431,7 @@ void undomove_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2, UINT16
 	n2 = currentlevel.data[yn2][xn2]; // This is the curent player's position
 	n3 = currentlevel.data[yn3][xn3]; // Destination / to
 	
-	switch(n3)
-	{
+	switch(n3) {
 		case CHAR_FLOOR:
 			currentlevel.data[yn3][xn3] = CHAR_PLAYER;
 			break;
@@ -475,10 +442,8 @@ void undomove_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2, UINT16
 			break;
 	}
 	
-	if(undomove[undo_head].pushed)
-	{
-		switch(n1)
-		{
+	if(undomove[undo_head].pushed) {
+		switch(n1) {
 			case CHAR_BOX:
 				currentlevel.data[yn1][xn1] = CHAR_FLOOR;
 				break;
@@ -489,8 +454,7 @@ void undomove_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2, UINT16
 			default:
 				break;
 		}
-		switch(n2) // revert push to box
-		{
+		switch(n2) { // revert push to box
 			case CHAR_PLAYERONGOAL:
 				currentlevel.data[yn2][xn2] = CHAR_BOXONGOAL;
 				currentlevel.goalstaken++;
@@ -500,10 +464,8 @@ void undomove_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2, UINT16
 				break;
 		}
 	}
-	else // only the player switched position, nothing was pushed
-	{
-		switch(n2)
-		{
+	else { // only the player switched position, nothing was pushed
+		switch(n2) {
 			case CHAR_PLAYERONGOAL:
 				currentlevel.data[yn2][xn2] = CHAR_GOAL;
 				break;
@@ -518,12 +480,10 @@ void undomove_updatelevel(UINT16 xn1, UINT16 yn1, UINT16 xn2, UINT16 yn2, UINT16
 	currentlevel.ypos = yn3;
 }
 
-void game_handleUndoMove(void)
-{
+void game_handleUndoMove(void) {
 	INT16 xn1 = 0, xn2 = 0, yn1 = 0, yn2 = 0, xn3 = 0, yn3 = 0;
 	
-	if(num_undomoves)
-	{
+	if(num_undomoves) {
 		xn2 = currentlevel.xpos;
 		yn2 = currentlevel.ypos;
 
@@ -532,8 +492,7 @@ void game_handleUndoMove(void)
 		else undo_head = UNDOBUFFERSIZE-1;		
 		// undo_head no points to previous move				
 		
-		switch(undomove[undo_head].movekey)
-		{
+		switch(undomove[undo_head].movekey) {
 			case 0x8: // undo LEFT
 				yn1 = yn2;
 				yn3 = yn2;
@@ -566,14 +525,12 @@ void game_handleUndoMove(void)
 	}
 }
 
-BOOL game_handleKey(char key)
-{
+BOOL game_handleKey(char key) {
 	BOOL done = FALSE;
 	BOOL move = FALSE;
 	INT16	xn1 = 0,xn2 = 0,yn1 = 0,yn2 = 0;
 	
-	switch(key)
-	{
+	switch(key) {
 		case 0x8: // LEFT
 			xn1 = currentlevel.xpos - 1;
 			yn1 = currentlevel.ypos;
@@ -606,10 +563,8 @@ BOOL game_handleKey(char key)
 			move = FALSE;
 			break;
 	}
-	if(move)
-	{
-		if(canmove(xn1,yn1,xn2,yn2))
-		{
+	if(move) {
+		if(canmove(xn1,yn1,xn2,yn2)) {
 			undomove[undo_head].movekey = key;
 			undomove[undo_head].pushed = (currentlevel.data[yn1][xn1] == CHAR_BOX) || (currentlevel.data[yn1][xn1] == CHAR_BOXONGOAL);
 			// rotate buffer always
@@ -625,8 +580,7 @@ BOOL game_handleKey(char key)
 	return done;
 }
 
-char game_getResponse(char *message, char option1, char option2)
-{
+char game_getResponse(char *message, char option1, char option2) {
 	UINT8 n;
 	UINT8 len = strlen(message);
 	UINT8 start = (80 - len) / 2;
@@ -634,8 +588,7 @@ char game_getResponse(char *message, char option1, char option2)
 	
 	
 	// vertical spacing
-	for(n = start - 1; n < (start+len+1); n++)
-	{
+	for(n = start - 1; n < (start+len+1); n++) {
 		vdp_cursorGoto(n,27);
 		putch(' ');
 		vdp_cursorGoto(n,29);
@@ -653,8 +606,7 @@ char game_getResponse(char *message, char option1, char option2)
 	return ret;
 }
 
-void game_splash_screen()
-{
+void game_splash_screen() {
 	vdp_cls();
 
 	vdp_cursorGoto(0,10);
@@ -680,8 +632,7 @@ void game_splash_screen()
 	puts("                      (c) 2023 Jeroen Venema\r\n");
 }
 
-void game_displayHelp(UINT8 xpos, UINT8 ypos)
-{
+void game_displayHelp(UINT8 xpos, UINT8 ypos) {
 	UINT16 gxpos = xpos * MINIMAP_WIDTH;
 	UINT16 gypos = (ypos * 8) + 72;
 	vdp_cursorGoto(xpos,ypos);
@@ -735,8 +686,7 @@ void game_displayHelp(UINT8 xpos, UINT8 ypos)
 	return;
 }
 
-INT16 game_selectLevel(UINT8 levels, UINT16 previouslevel)
-{
+INT16 game_selectLevel(UINT8 levels, UINT16 previouslevel) {
 	INT16 lvl;
 	BOOL selected = FALSE;
 	lvl = previouslevel;
@@ -788,15 +738,14 @@ INT16 game_selectLevel(UINT8 levels, UINT16 previouslevel)
 	return lvl;
 }
 
-void game_displayLevel(void)
-{
+void game_displayLevel(void) {
 	UINT16 width, height;		// position in level GRID
 	UINT16 ystart,xstart,x,y;	// on-screen positions
 	char c;
 	
 	spritenumber = 1;
 	// Player sprite
-	vdp_spriteSelect(0);
+	vdp_spriteSelect(SPRITE_PLAYER);
 	vdp_spriteClearFramesSelected();
 	vdp_spriteAddFrameSelected(TILE_PLAYER);
 	vdp_spriteHideSelected();
@@ -806,11 +755,9 @@ void game_displayLevel(void)
 	ystart = ((MAXHEIGHT - currentlevel.height) / 2) *BITMAP_HEIGHT;
 	
 	y = ystart;
-	for(height = 0; height < currentlevel.height; height++)
-	{
+	for(height = 0; height < currentlevel.height; height++) {
 		x = xstart;
-		for(width = 0; width < currentlevel.width; width++)
-		{
+		for(width = 0; width < currentlevel.width; width++) {
 			c = currentlevel.data[height][width];
 			sprites[height][width] = NOSPRITE; // Faster in most cases
 			switch(c) {
@@ -819,7 +766,7 @@ void game_displayLevel(void)
 					break;
 				case CHAR_PLAYER:
 				case CHAR_PLAYERONGOAL:
-					vdp_spriteSelect(0);
+					vdp_spriteSelect(SPRITE_PLAYER);
 					vdp_spriteMoveToSelected(x,y);
 					vdp_spriteShowSelected();
 					break;
@@ -853,11 +800,10 @@ void game_displayLevel(void)
 		y += BITMAP_HEIGHT;
 	}
 	vdp_spriteActivateTotal(spritenumber);
-	vdp_spriteRefresh();
+	vdp_spriteWaitRefresh();
 }
 
-void game_displayMinimap(void)
-{
+void game_displayMinimap(void) {
 	UINT16 width, height;
 	UINT16 ystart,xstart,x,y;
 	char c;
@@ -903,42 +849,40 @@ void game_displayMinimap(void)
 	}
 }
 
-UINT8 game_readLevels(char *filename)
-{
+UINT8 game_readLevels(char *filename) {
 	// Reads all the levels in the standard file into memory and returns the number of levels
 	UINT8 numlevels = 0;
 	UINT16 size;
 	UINT8 file;
 	char* ptr = (char*)LEVELDATA;
 
-	vdp_fgcolour(BRIGHT_WHITE);
+	vdp_fgcolour(DARK_WHITE);
 
 	file = mos_fopen(filename, fa_read);
-	if(file)
-	{
+	if(file) {
 		numlevels = 0;
 		
-		while(!mos_feof(file))
-		{
+		while(!mos_feof(file)) {
 			size = sizeof(struct sokobanlevel);
-			while(size)
-			{
-				*ptr = mos_fgetc(file);
-				ptr++;
-				size--;
-			}
+			mos_fread(file, ptr, size);
+			ptr += size;
 			numlevels++;
-			vdp_cursorGoto(20,38);
+			vdp_cursorGoto(22,38);
 			printf("Loading levels (%03d)....",numlevels);
-
 		}		
 		mos_fclose(file);
 	}
+
+	vdp_cursorGoto(22,38);
+	printf("   %d levels loaded       ",numlevels);
+	vdp_fgcolour(BRIGHT_WHITE);
+	vdp_cursorGoto(27,41);	
+	printf("press any key");
+	getch();
 	return numlevels;
 }	
 
-void game_initLevel(UINT8 levelid)
-{
+void game_initLevel(UINT8 levelid) {
 	memset(&currentlevel, 0, sizeof(struct sokobanlevel));
 	memcpy(&currentlevel, (void*)(LEVELDATA+(sizeof(struct sokobanlevel))*levelid), sizeof(struct sokobanlevel));
 	// initialize undo buffer
