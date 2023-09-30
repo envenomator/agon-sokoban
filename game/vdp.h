@@ -39,10 +39,7 @@ enum {
 };
 
 // VDP modes
-#define VDPMODE_1024x728_2C 0
-#define VDPMODE_512x384_16C 1
-#define VDPMODE_320x200_64C 2
-#define VDPMODE_640x480_16C 3
+#define VDPMODE_640x480_16C 0
 #define VDPMODE_DEFAULT     1
 
 // Generic

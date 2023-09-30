@@ -13,16 +13,16 @@ int main(int argc, char * argv[]) {
 	BOOL quit;
 	BOOL ingame;
 	char key;
-	
+
+	vdp_mode(VDPMODE_640x480_16C);
+	delayms(500);
+	vdp_cursorDisable();
+
 	game_splash_screen();
 
 	levels = game_readLevels(FILE_LEVELS);
 	
 	if(levels)	{	
-		vdp_mode(VDPMODE_640x480_16C);
-		delayms(1000);
-		vdp_cursorDisable();
-
 		game_sendSpriteData();		
 		while(levelnumber >= 0) {
 			levelnumber = game_selectLevel(levels, levelnumber); // returns -1 if abort, or valid number between 0-(levels-1)
